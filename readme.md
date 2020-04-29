@@ -1,9 +1,10 @@
-﻿```
+﻿собрать, запустить
+```
 docker build -t learnbot -f LearnEnglishWordsBot/LearnEnglishWordsBot/Dockerfile .
 docker run -d --name learnbot --network="host" image_id
 ```
 
-Настройки бота
+пример appsettings.*.json
 ```
 {
   "ConnectionStrings": {
