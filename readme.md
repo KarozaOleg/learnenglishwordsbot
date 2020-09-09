@@ -1,10 +1,12 @@
-﻿собрать, запустить
+This is telegram bot for learning english words
+
+build, deploy
 ```
 docker build -t learnbot -f LearnEnglishWordsBot/LearnEnglishWordsBot/Dockerfile .
 docker run -d --name learnbot --network="host" image_id
 ```
 
-пример appsettings.*.json
+appsettings.*.json example
 ```
 {
   "ConnectionStrings": {
