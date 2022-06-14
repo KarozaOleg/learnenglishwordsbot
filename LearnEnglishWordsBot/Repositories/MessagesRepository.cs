@@ -1,4 +1,5 @@
 ﻿using LearnEnglishWordsBot.Interfaces;
+using System;
 
 namespace LearnEnglishWordsBot.Repositories
 {
@@ -6,7 +7,7 @@ namespace LearnEnglishWordsBot.Repositories
     {
         public string GetEmptyTasks()
         {
-            return "Авeсом! :D\r\nСлова на сегодня закончились\r\nЕсли хочешь еще 10 - отправь команду /CreateTasks";
+            return $"Авeсом! :D{Environment.NewLine}Слова на сегодня закончились{Environment.NewLine}Если хочешь еще 10 - отправь команду{Environment.NewLine}/CreateTasks";
         }
 
         public string GetErrorCommand()
@@ -36,55 +37,55 @@ namespace LearnEnglishWordsBot.Repositories
 
         public string GetNewDayGreeting()
         {
-            return "Доброе утро!\r\nВот первое слово:\r\n";
+            return $"Доброе утро!{Environment.NewLine}Вот первое слово:{Environment.NewLine}";
         }
 
         public string GetEmptyLearingSets()
         {
             return
-                "Не могу придумать слова\r\n" +
-                "Не выбрано ни одного набора\r\n"+
+                $"Не могу придумать слова{Environment.NewLine}" +
+                $"Не выбрано ни одного набора{Environment.NewLine}" +
                 "Отправь команду /LearnSets, управляй реальностью!";
         }
 
         public string GetLearnSetIsLearned(int idLearnSet, string learnSetName)
         {
             return
-                "Анбеливебл! :D\r\n" +
-                $"Набор#{idLearnSet}\r\n" +
-                $"Название: \"{learnSetName}\"\r\n" +
+                $"Анбеливебл! :D{Environment.NewLine}" +
+                $"Набор#{idLearnSet}{Environment.NewLine}" +
+                $"Название: \"{learnSetName}\"{Environment.NewLine}" +
                 "Тобой полностью разгадан!!1 Сомнений на счет твой не было у меня!";
         }
 
         public string GetLearnSetAdded(int idLearnSet, string learnSetName)
         {
             return
-                $"Набор#{idLearnSet}\r\n" +
-                $"Название: \"{learnSetName}\"\r\n" +
+                $"Набор#{idLearnSet}{Environment.NewLine}" +
+                $"Название: \"{learnSetName}\"{Environment.NewLine}" +
                 "Успешно включен";
         }
 
         public string GetLearnSetAddedError(int idLearnSet, string learnSetName)
         {
             return
-               $"Набор#{idLearnSet}\r\n" +
-               $"Название: \"{learnSetName}\"\r\n" +
+               $"Набор#{idLearnSet}{Environment.NewLine}" +
+               $"Название: \"{learnSetName}\"{Environment.NewLine}" +
                "Ошибка при попытке включения, слеза";
         }
 
         public string GetLearnSetRemoved(int idLearnSet, string learnSetName)
         {
             return
-                $"Набор#{idLearnSet}\r\n" +
-                $"Название: \"{learnSetName}\"\r\n" +
+                $"Набор#{idLearnSet}{Environment.NewLine}" +
+                $"Название: \"{learnSetName}\"{Environment.NewLine}" +
                 "Успешно выключен";
         }        
 
         public string GetLearnSetRemovedError(int idLearnSet, string learnSetName)
         {
             return
-               $"Набор#{idLearnSet}\r\n" +
-               $"Название: \"{learnSetName}\"\r\n" +
+               $"Набор#{idLearnSet}{Environment.NewLine}" +
+               $"Название: \"{learnSetName}\"{Environment.NewLine}" +
                "Ошибка при попытке отключения, слеза";
         }
     }
