@@ -54,7 +54,7 @@ namespace LearnEnglishWordsBot.Services
                     var isLearning = learningSets.Select(ls => ls.Id == learnSets[i].Id).Contains(true);
                     if (isLearning)
                     {
-                        var commandStop = $"/{BotCommand.LearnSets_stop.ToString()} {learnSets[i].Id.ToString()}";
+                        var commandStop = $"/{BotCommand.LearnSets_stop} {learnSets[i].Id}";
                         commands.Add(commandStop);
 
                         var amountLearnedWords = _wordsRepository.GetAmountLearnedWords(conn, idUser, learnSets[i].Id);
@@ -64,7 +64,7 @@ namespace LearnEnglishWordsBot.Services
                     }
                     else
                     {
-                        var commandStart = $"/{BotCommand.LearnSets_start.ToString()} {learnSets[i].Id.ToString()}";
+                        var commandStart = $"/{BotCommand.LearnSets_start} {learnSets[i].Id}";
                         commands.Add(commandStart);
 
                         infoMessage.Append("Чтобы включить этот набор отправь команду:").Append(Environment.NewLine);

@@ -6,6 +6,7 @@ using System;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using BotCommand = LearnEnglishWordsBot.Models.BotCommand;
 
 namespace LearnEnglishWordsBot.Controllers
 {
@@ -51,6 +52,9 @@ namespace LearnEnglishWordsBot.Controllers
         {
             try
             {
+                if (ModelState.IsValid == false)
+                    throw new ArgumentException($"{nameof(update)}, model state is wrong");
+
                 if (IsUpdateFresh(update))
                 {
                     await Task.Run(() => HandlerUpdate(update));

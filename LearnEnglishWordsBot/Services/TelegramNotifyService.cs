@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Net.Http;
 using Telegram.Bot;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
@@ -29,7 +30,7 @@ namespace LearnEnglishWordsBot.Services
             ILogger<TelegramNotifyService> logger,
             IMessagesRepository messageCommandRepository,
             IAnswersRepository answersRepository,
-            IOptions<BotSettings> settings, 
+            IOptions<BotSettings> settings,
             IOptions<DatabaseSettings> databaseSettings)
         {
             FlowMessages = new ThreadFlow<(int idUser, string message, ReplyKeyboardMarkup keyboad)>(
@@ -39,20 +40,23 @@ namespace LearnEnglishWordsBot.Services
             _logger = logger;
             _messageCommandRepository = messageCommandRepository;
             _answersRepository = answersRepository;
-            
+
             _connectionString = databaseSettings.Value.DefaultConnection;
 
             var _settings = settings.Value;
+            var httpClient = default(HttpClient);
             // use proxy if configured in appsettings.*.json
-            if (string.IsNullOrEmpty(_settings.Socks5Host))
-                _client = new TelegramBotClient(_settings.BotToken);
-            else
+            if (string.IsNullOrEmpty(_settings.Socks5Host) == false)
             {
-                if ((string.IsNullOrEmpty(_settings.Socks5Username) && string.IsNullOrEmpty(_settings.Socks5Password)))
-                    _client = new TelegramBotClient(_settings.BotToken, new HttpToSocks5Proxy(_settings.Socks5Host, _settings.Socks5Port));
-                else
-                    _client = new TelegramBotClient(_settings.BotToken, new HttpToSocks5Proxy(_settings.Socks5Host, _settings.Socks5Port, _settings.Socks5Username, _settings.Socks5Password));
+                var proxy = new HttpToSocks5Proxy(_settings.Socks5Host, _settings.Socks5Port);
+
+                if (string.IsNullOrEmpty(_settings.Socks5Username) == false)
+                    proxy = new HttpToSocks5Proxy(_settings.Socks5Host, _settings.Socks5Port, _settings.Socks5Username, _settings.Socks5Password);
+                proxy.ResolveHostnamesLocally = true;
+                httpClient = new HttpClient(new HttpClientHandler { Proxy = proxy, UseProxy = true });
             }
+
+            _client = new TelegramBotClient(_settings.BotToken, httpClient);
         }
         
         public void Dispose()
@@ -72,7 +76,7 @@ namespace LearnEnglishWordsBot.Services
 
         public void SetSend(long idChat, VoteMessage message)
         {
-            _client.SendTextMessageAsync(idChat, message._message, ParseMode.Default, false, false, 0, ReturnKeyboard(message.Answers));
+            _client.SendTextMessageAsync(idChat, message._message, ParseMode.Markdown, replyMarkup: ReturnKeyboard(message.Answers));
         }
 
         public void SetCreateRecipient(int idUser, long idChat, ref bool isUserAlreadyExist)
@@ -125,7 +129,7 @@ namespace LearnEnglishWordsBot.Services
             foreach (var answer in answers)
                 bRows[i++] = new KeyboardButton[] { answer };
 
-            return new ReplyKeyboardMarkup(bRows, true, true);
+            return new ReplyKeyboardMarkup(bRows) { ResizeKeyboard = true };
         }
 
         void SendMessage(int idUser, string message, ReplyKeyboardMarkup keyboad)
@@ -179,7 +183,9 @@ namespace LearnEnglishWordsBot.Services
                 _logger.LogError($"Can't send message for user: {message.idUser}, can't get idChat");
                 return;
             }
-            _client.SendTextMessageAsync(idChat, message.mess, ParseMode.Default, false, false, 0, message.keyboad);
+            var msg = message.mess.Replace("_", "\\_");
+            //todo: receive status, log errors
+            _client.SendTextMessageAsync(idChat, msg, ParseMode.Markdown, replyMarkup: message.keyboad);
         }
     }
 }

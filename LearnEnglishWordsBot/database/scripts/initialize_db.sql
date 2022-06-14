@@ -1,0 +1,8 @@
+--users.sql
+--usersbytelegram.sql
+--learn_set.sql
+--user_learning_set.sql
+--words.sql
+--words_learn_set.sql
+--user_learned_set.sql
+--taskstolearn.sql

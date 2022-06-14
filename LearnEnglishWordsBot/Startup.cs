@@ -26,7 +26,7 @@ namespace LearnEnglishWordsBot
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_3_0).AddNewtonsoftJson();
 
             services.Configure<DatabaseSettings>(Configuration.GetSection("ConnectionStrings"));
             services.Configure<JobTriggersSettigns>(Configuration.GetSection(nameof(JobTriggersSettigns)));
@@ -48,25 +48,22 @@ namespace LearnEnglishWordsBot
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, IApplicationLifetime lifetime)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             if (env.IsDevelopment())
             {
-                app.UseDeveloperExceptionPage();                
+                app.UseDeveloperExceptionPage();
                 app.UseRouter(new RouteBuilder(app, new RouteHandler(CreateTasksToLearn)).MapRoute("createTasksToLearn", "createTasksToLearn").Build());
             }
-            else
+
+            app.UseStaticFiles();
+            app.UseRouting();
+            app.UseCors();
+
+            app.UseEndpoints(endpoints =>
             {
-                app.UseHsts();
-            }
-
-            var quartz = app.ApplicationServices.GetService<QuartzStartup>();
-
-            lifetime.ApplicationStarted.Register(async () => await quartz.SetStart());
-            lifetime.ApplicationStopping.Register(quartz.SetStop);
-
-            app.UseHttpsRedirection();
-            app.UseMvc();
+                endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}");
+            });
         }
 
         async Task CreateTasksToLearn(HttpContext context)
