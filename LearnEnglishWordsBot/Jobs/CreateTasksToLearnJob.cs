@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace LearnEnglishWordsBot.Jobs
 {
+    [DisallowConcurrentExecution]
     public class CreateTasksToLearnJob : IJob
     {
         readonly ILogger _logger;

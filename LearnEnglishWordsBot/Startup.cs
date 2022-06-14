@@ -1,4 +1,5 @@
-﻿using LearnEnglishWordsBot.Interfaces;
+﻿using LearnEnglishWordsBot.Extensions;
+using LearnEnglishWordsBot.Interfaces;
 using LearnEnglishWordsBot.Jobs;
 using LearnEnglishWordsBot.Repositories;
 using LearnEnglishWordsBot.Services;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Quartz;
 using System.Threading.Tasks;
 
 namespace LearnEnglishWordsBot
@@ -31,9 +33,13 @@ namespace LearnEnglishWordsBot
             services.Configure<DatabaseSettings>(Configuration.GetSection("ConnectionStrings"));
             services.Configure<JobTriggersSettigns>(Configuration.GetSection(nameof(JobTriggersSettigns)));
             services.Configure<BotSettings>(Configuration.GetSection(nameof(BotSettings)));
-
-            services.AddSingleton<QuartzStartup>();
-            services.AddTransient<CreateTasksToLearnJob>();
+            
+            services.AddQuartz(q => 
+            {
+                q.UseMicrosoftDependencyInjectionScopedJobFactory();
+                q.AddJobAndTrigger<CreateTasksToLearnJob>(Configuration);
+            });
+            services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 
             services.AddSingleton<IUsersRepository, UsersRepository>();
             services.AddSingleton<ILearnService, LearnService>();

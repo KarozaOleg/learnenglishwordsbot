@@ -5,6 +5,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="wwwroot\**" />
+    <Content Remove="wwwroot\**" />
+    <EmbeddedResource Remove="wwwroot\**" />
+    <None Remove="wwwroot\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="database\table\learn_set.sql" />
     <None Remove="database\table\users.sql" />
     <None Remove="database\table\user_learned_set.sql" />
@@ -22,10 +29,6 @@
     <EmbeddedResource Include="database\table\words_learn_set.sql" />
     <EmbeddedResource Include="database\table\words.sql" />
     <EmbeddedResource Include="database\table\words_learned.sql" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="wwwroot\" />
   </ItemGroup>
 
   <ItemGroup>
