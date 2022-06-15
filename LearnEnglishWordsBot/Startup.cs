@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using NLog.Extensions.Logging;
 using Quartz;
 using System.Threading.Tasks;
 
@@ -51,6 +53,13 @@ namespace LearnEnglishWordsBot
             services.AddTransient<ILearnSetRepository, LearnSetRepository>();
             services.AddTransient<ILearnSetService, LearnSetService>();
             services.AddTransient<ILearnTaskRepository, LearnTaskRepository>();
+
+            services.AddLogging(loggingBuilder =>
+            {
+                loggingBuilder.ClearProviders();
+                loggingBuilder.AddConfiguration(Configuration.GetSection("Logging"));
+                loggingBuilder.AddNLog(Configuration);
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

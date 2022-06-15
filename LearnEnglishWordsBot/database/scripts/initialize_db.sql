@@ -6,3 +6,4 @@
 --words_learn_set.sql
 --user_learned_set.sql
 --taskstolearn.sql
+--words_learned.sql
