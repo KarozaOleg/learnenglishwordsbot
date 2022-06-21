@@ -11,10 +11,6 @@ Based on library [Telegram.Bot](https://github.com/TelegramBots/Telegram.Bot)
 - find the bot in telegram search - [@LearnEnglishW0rdsBot](https://t.me/LearnEnglishW0rdsBot)
 - send `/start` message
 # Usage notes
-## Create new set
-in progress...
-## Create new pair on set
-in progress...
 ## Force launch of scheduled task
 send `GET` request on address
 ```
