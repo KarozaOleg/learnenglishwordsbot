@@ -11,15 +11,13 @@ namespace LearnEnglishWordsBot.Repositories
 {
     public class UsersRepository : IUsersRepository
     {
-        private readonly string _connectionString;
-        private readonly ILogger _logger;
+        private string ConnectionString { get; }
+        private ILogger Logger { get; }
 
-        public UsersRepository(
-            ILogger<UsersRepository> logger,
-            IOptions<DatabaseSettings> databaseOptions)
+        public UsersRepository(ILogger<UsersRepository> logger, IOptions<DatabaseSettings> databaseOptions)
         {
-            _logger = logger;
-            _connectionString = databaseOptions.Value.DefaultConnection;
+            Logger = logger;
+            ConnectionString = databaseOptions.Value.DefaultConnection;
         }
 
         public int SetCreate(string username, ref bool isUserAlreadyExist)
@@ -30,7 +28,7 @@ namespace LearnEnglishWordsBot.Repositories
                 return idUser;
             }
 
-            using (var conn = new NpgsqlConnection(_connectionString))
+            using (var conn = new NpgsqlConnection(ConnectionString))
             {
                 conn.Open();
 
@@ -45,9 +43,9 @@ namespace LearnEnglishWordsBot.Repositories
             }
         }
 
-        public int[] GetId()
+        public int[] GetIdAllUsers()
         {
-            using (IDbConnection db = new NpgsqlConnection(_connectionString))
+            using (IDbConnection db = new NpgsqlConnection(ConnectionString))
             {
                 var sql =
                     @"SELECT
@@ -59,7 +57,7 @@ namespace LearnEnglishWordsBot.Repositories
 
         public bool GetUsername(int idUser, out string username)
         {
-            using (IDbConnection db = new NpgsqlConnection(_connectionString))
+            using (IDbConnection db = new NpgsqlConnection(ConnectionString))
             {
                 var sql =
                     @"SELECT
@@ -71,7 +69,7 @@ namespace LearnEnglishWordsBot.Repositories
                 username = db.Query<string>(sql, new { idUser }).FirstOrDefault();
                 if (username == null)
                 {
-                    _logger.LogError($"Error get username for idUser: {idUser}");
+                    Logger.LogError($"Error get username for idUser: {idUser}");
                     return false;
                 }
                 return true;
@@ -81,7 +79,7 @@ namespace LearnEnglishWordsBot.Repositories
         bool IsUserExist(string username, out int idUser)
         {
             idUser = 0;
-            using (var db = new NpgsqlConnection(_connectionString))
+            using (var db = new NpgsqlConnection(ConnectionString))
             {
                 var sql =
                     @"SELECT

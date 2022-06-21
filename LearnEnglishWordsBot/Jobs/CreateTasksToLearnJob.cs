@@ -9,53 +9,47 @@ namespace LearnEnglishWordsBot.Jobs
     [DisallowConcurrentExecution]
     public class CreateTasksToLearnJob : IJob
     {
-        readonly ILogger _logger;
-        readonly ILearnTaskService _learnTaskService;
-        readonly ILearnTaskRepository _learnTaskRepository;
-        readonly IUsersRepository _usersRepository;
-        readonly INotifyService _notifyService;
-        readonly IMessagesRepository _messagesRepository;
+        private ILogger Logger { get; }
+        private ILearnTaskService LearnTaskService { get; }
+        private ILearnTaskRepository LearnTaskRepository { get; }
+        private IUsersRepository UsersRepository { get; }
+        private INotifyService NotifyService { get; }
+        private IMessagesRepository MessagesRepository { get; }
 
-        public CreateTasksToLearnJob(
-            ILogger<CreateTasksToLearnJob> logger,
-            ILearnTaskService learnTasksService,
-            ILearnTaskRepository learnTaskRepository,
-            IUsersRepository usersRepository,
-            INotifyService notifyService,
-            IMessagesRepository messagesRepository)
+        public CreateTasksToLearnJob(ILogger<CreateTasksToLearnJob> logger, ILearnTaskService learnTasksService, ILearnTaskRepository learnTaskRepository, IUsersRepository usersRepository, INotifyService notifyService, IMessagesRepository messagesRepository)
         {
-            _logger = logger;
-            _learnTaskService = learnTasksService;
-            _learnTaskRepository = learnTaskRepository;
-            _usersRepository = usersRepository;
-            _notifyService = notifyService;
-            _messagesRepository = messagesRepository;
+            Logger = logger;
+            LearnTaskService = learnTasksService;
+            LearnTaskRepository = learnTaskRepository;
+            UsersRepository = usersRepository;
+            NotifyService = notifyService;
+            MessagesRepository = messagesRepository;
         }
 
         public async Task Execute(IJobExecutionContext context)
         {
             try
             {
-                await Task.Run(() => CreateTasksToLearn());
+                await Task.Factory.StartNew(CreateTasksToLearn);
             }
             catch (Exception exc)
             {
-                _logger.LogError(exc, "Error CreateTasksToLearnJob");
+                Logger.LogError(exc, "Error CreateTasksToLearnJob");
             }
         }
 
         private void CreateTasksToLearn()
         {
-            _learnTaskRepository.SetRemoveAll();
+            LearnTaskRepository.SetRemoveAll();
 
-            var idUsers = _usersRepository.GetId();
-            for (int i = 0; i < idUsers.Length; i++)
+            var idUsers = UsersRepository.GetIdAllUsers();
+            foreach (var idUser in idUsers)
             {
-                _notifyService.SetSend(idUsers[i], _messagesRepository.GetNewDayGreeting());
+                NotifyService.SetSend(idUser, MessagesRepository.GetNewDayGreeting());
 
-                _learnTaskService.SetCreateTasksToLearn(idUsers[i]);
-                if (_learnTaskService.SetSendRandomTask(idUsers[i]) == false)
-                    throw new Exception($"Error send random task for user with id: {idUsers[i]}");
+                LearnTaskService.SetCreateTasksToLearn(idUser);
+                if (LearnTaskService.SetSendRandomTask(idUser) == false)
+                    throw new Exception($"Error send random task for user with id: {idUser}");
             }
         }
     }

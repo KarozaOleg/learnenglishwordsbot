@@ -12,12 +12,11 @@ namespace LearnEnglishWordsBot.Repositories
 {
     public class LearnTaskRepository : ILearnTaskRepository
     {
-        private readonly string _connectionString;
+        private string ConnectionString { get; }
 
-        public LearnTaskRepository(
-            IOptions<DatabaseSettings> databaseOptions)
+        public LearnTaskRepository(IOptions<DatabaseSettings> databaseOptions)
         {
-            _connectionString = databaseOptions.Value.DefaultConnection;
+            ConnectionString = databaseOptions.Value.DefaultConnection;
         }
 
         public void SetCreate(IDbConnection conn, int idUser, int idWord, bool isRevers)
@@ -47,7 +46,7 @@ namespace LearnEnglishWordsBot.Repositories
 
         public void SetRemoveAll()
         {
-            using (var conn = new NpgsqlConnection(_connectionString))
+            using (var conn = new NpgsqlConnection(ConnectionString))
             {
                 var sql = @"DELETE FROM public.taskstolearn";
                 conn.Execute(sql);

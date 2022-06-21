@@ -13,21 +13,19 @@ namespace LearnEnglishWordsBot.Repositories
 {
     public class WordsRepository : IWordsRepository
     {
-        readonly int _amountSuccessAnswers = 3;
-        private readonly string _connectionString;
-        private readonly ILogger _logger;
+        private const int _amountSuccessAnswers = 3;
+        private string ConnectionString { get;}
+        private ILogger Logger { get; }
 
-        public WordsRepository(
-               IOptions<DatabaseSettings> databaseOptions,
-               ILogger<LearnSetRepository> logger)
+        public WordsRepository(IOptions<DatabaseSettings> databaseOptions, ILogger<LearnSetRepository> logger)
         {
-            _connectionString = databaseOptions.Value.DefaultConnection;
-            _logger = logger;
+            ConnectionString = databaseOptions.Value.DefaultConnection;
+            Logger = logger;
         }
 
         public void SetAdd(string russian, string english, out int idWord)
         {
-            using (var conn = new NpgsqlConnection(_connectionString))
+            using (var conn = new NpgsqlConnection(ConnectionString))
             {
                 if (IsWordExist(conn, english, out idWord))
                     return;

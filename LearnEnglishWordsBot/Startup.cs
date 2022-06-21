@@ -14,18 +14,22 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
 using Quartz;
+using System;
 using System.Threading.Tasks;
 
 namespace LearnEnglishWordsBot
 {
     public class Startup
     {
+        public IConfiguration Configuration { get; }
+        private ILogger Logger { get; }
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            var nlogLoggerProvider = new NLogLoggerProvider();
+            Logger = nlogLoggerProvider.CreateLogger(typeof(Startup).FullName);
         }
-
-        public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -53,6 +57,7 @@ namespace LearnEnglishWordsBot
             services.AddTransient<ILearnSetRepository, LearnSetRepository>();
             services.AddTransient<ILearnSetService, LearnSetService>();
             services.AddTransient<ILearnTaskRepository, LearnTaskRepository>();
+            services.AddTransient<CreateTasksToLearnJob>();
 
             services.AddLogging(loggingBuilder =>
             {
@@ -83,9 +88,17 @@ namespace LearnEnglishWordsBot
 
         async Task CreateTasksToLearn(HttpContext context)
         {
-            var job = context.RequestServices.GetService<CreateTasksToLearnJob>();
-            await job.Execute(null);
-            await context.Response.WriteAsync("CreateTasksToLearnJob job is done!");
+            try
+            {
+                var job = context.RequestServices.GetService<CreateTasksToLearnJob>();
+                await job.Execute(null);
+                await context.Response.WriteAsync("CreateTasksToLearnJob job is done!");
+            }
+            catch(Exception ex)
+            {
+                Logger.LogError(ex, "error happend during launching CreateTasksToLearnJob job");
+                throw;
+            }
         }
     }
 }

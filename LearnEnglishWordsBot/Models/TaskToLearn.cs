@@ -2,12 +2,12 @@
 {
     public class TaskToLearn
     {
-        public readonly int IdTask;
-        public readonly int IdWord;
-        public readonly string InRussian;
-        public readonly string InEnglish;
-        public readonly int AmountWrongAnswer;
-        public readonly bool IsRevers;
+        public int IdTask { get; }
+        public int IdWord { get; }
+        public string InRussian { get; }
+        public string InEnglish { get; }
+        public int AmountWrongAnswer { get; }
+        public bool IsRevers { get; }
 
         public TaskToLearn(int idTask, int idWord, string inRussian, string inEnglish, bool isRevers, int amountWrongAnswer)
         {

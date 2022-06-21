@@ -13,32 +13,24 @@ namespace LearnEnglishWordsBot.Controllers
     [Route("api/[controller]")]
     public class UpdateController : Controller
     {
-        const double _secondsWhileUpdateIsFresh = 20;
+        private const double SecondsWhileUpdateIsFresh = 20;
+        private ILogger Logger { get; }
+        private IUsersRepository UsersRepository { get; }
+        private IMessagesRepository MessagesRepository { get; }
+        private INotifyService NotifyService { get; }
+        private ILearnTaskService LearnTaskService { get; }
+        private ILearnService LearnService { get; }
+        private ILearnSetService LearnSetService { get; }
 
-        readonly ILogger _logger;
-        readonly IUsersRepository _usersRepository;
-        readonly IMessagesRepository _messagesRepository;
-        readonly INotifyService _notifyService;
-        readonly ILearnTaskService _learnTaskService;
-        readonly ILearnService _learnService;
-        readonly ILearnSetService _learnSetService;
-
-        public UpdateController(
-            ILogger<UpdateController> logger,
-            IUsersRepository usersRepository,
-            IMessagesRepository messageCommandRepository,
-            INotifyService notifyService,
-            ILearnTaskService learnTasksService,
-            ILearnService learnWordsService,
-            ILearnSetService learnSetService)
+        public UpdateController(ILogger<UpdateController> logger, IUsersRepository usersRepository, IMessagesRepository messageCommandRepository, INotifyService notifyService, ILearnTaskService learnTasksService, ILearnService learnWordsService, ILearnSetService learnSetService)
         {
-            _logger = logger;
-            _usersRepository = usersRepository;
-            _messagesRepository = messageCommandRepository;
-            _notifyService = notifyService;
-            _learnTaskService = learnTasksService;
-            _learnService = learnWordsService;
-            _learnSetService = learnSetService;
+            Logger = logger;
+            UsersRepository = usersRepository;
+            MessagesRepository = messageCommandRepository;
+            NotifyService = notifyService;
+            LearnTaskService = learnTasksService;
+            LearnService = learnWordsService;
+            LearnSetService = learnSetService;
         }
 
         [HttpGet]
@@ -62,8 +54,8 @@ namespace LearnEnglishWordsBot.Controllers
             }
             catch (Exception exc)
             {
-                _logger.LogError($"exc: {exc.Message} exc.inner: {exc.InnerException?.Message}");
-                _notifyService.SetSendWithBotCommandAnswers(update.Message.Chat.Id);
+                Logger.LogError($"exc: {exc.Message} exc.inner: {exc.InnerException?.Message}");
+                NotifyService.SetSendWithBotCommandAnswers(update.Message.Chat.Id);
             }
             return Ok();
         }
@@ -73,8 +65,8 @@ namespace LearnEnglishWordsBot.Controllers
             var message = update.Message;
 
             var isUserAlreadyExist = false;
-            var idUser = _usersRepository.SetCreate(ReturnUsername(message), ref isUserAlreadyExist);
-            _notifyService.SetCreateRecipient(idUser, message.Chat.Id, ref isUserAlreadyExist);
+            var idUser = UsersRepository.SetCreate(ReturnUsername(message), ref isUserAlreadyExist);
+            NotifyService.SetCreateRecipient(idUser, message.Chat.Id, ref isUserAlreadyExist);
 
             /*
             if (isUserAlreadyExist == false)
@@ -91,18 +83,18 @@ namespace LearnEnglishWordsBot.Controllers
                         case MessageType.Text:
                             if (HandlerCommand(idUser, message.Text))                            
                                 return;                            
-                            if (_learnService.SetHandleMessage(idUser, message.Text))                            
+                            if (LearnService.SetHandleMessage(idUser, message.Text))                            
                                 return;                            
                             break;
 
                         default:
-                            _logger.LogInformation($"Don't know how work with message type: {message.Type.ToString()}");
+                            Logger.LogInformation($"Don't know how work with message type: {message.Type.ToString()}");
                             break;
                     }
                     break;
 
                 default:
-                    _logger.LogInformation($"Don't know how work with update type: {update.Type.ToString()}");
+                    Logger.LogInformation($"Don't know how work with update type: {update.Type.ToString()}");
                     break;
             }
 
@@ -112,7 +104,7 @@ namespace LearnEnglishWordsBot.Controllers
         bool IsUpdateFresh(Update update)
         {
             var diff = DateTime.UtcNow.Subtract(update.Message.Date).TotalSeconds;
-            return (diff < _secondsWhileUpdateIsFresh);
+            return (diff < SecondsWhileUpdateIsFresh);
         }
 
         bool HandlerCommand(int idUser, string message)
@@ -128,16 +120,16 @@ namespace LearnEnglishWordsBot.Controllers
             switch (command)
             {
                 case BotCommand.Start:
-                    _notifyService.SetSendWithBotCommandAnswers(idUser, _messagesRepository.GetStart());
+                    NotifyService.SetSendWithBotCommandAnswers(idUser, MessagesRepository.GetStart());
                     break;
 
                 case BotCommand.CreateTasks:
-                    _learnTaskService.SetCreateTasksToLearn(idUser);
-                    _learnTaskService.SetSendRandomTask(idUser);
+                    LearnTaskService.SetCreateTasksToLearn(idUser);
+                    LearnTaskService.SetSendRandomTask(idUser);
                     break;
 
                 case BotCommand.LearnSets:
-                    _learnSetService.SetSendLearnSetsInfo(idUser);
+                    LearnSetService.SetSendLearnSetsInfo(idUser);
                     break;
 
                 case BotCommand.LearnSets_start:
@@ -148,26 +140,26 @@ namespace LearnEnglishWordsBot.Controllers
                         return false;
                     if (command == BotCommand.LearnSets_start)
                     {
-                        if (_learnSetService.SetLearnSetStart(idUser, idLearnSet, out string learnSetName) == false)
-                            _notifyService.SetSendWithBotCommandAnswers(idUser, _messagesRepository.GetLearnSetAddedError(idLearnSet, learnSetName));
+                        if (LearnSetService.SetLearnSetStart(idUser, idLearnSet, out string learnSetName) == false)
+                            NotifyService.SetSendWithBotCommandAnswers(idUser, MessagesRepository.GetLearnSetAddedError(idLearnSet, learnSetName));
                         else
-                            _notifyService.SetSendWithBotCommandAnswers(idUser, _messagesRepository.GetLearnSetAdded(idLearnSet, learnSetName));
+                            NotifyService.SetSendWithBotCommandAnswers(idUser, MessagesRepository.GetLearnSetAdded(idLearnSet, learnSetName));
                     }
                     else if (command == BotCommand.LearnSets_stop)
                     {
-                        if (_learnSetService.SetLearnSetStop(idUser, idLearnSet, out string learnSetName) == false)
-                            _notifyService.SetSendWithBotCommandAnswers(idUser, _messagesRepository.GetLearnSetRemovedError(idLearnSet, learnSetName));
+                        if (LearnSetService.SetLearnSetStop(idUser, idLearnSet, out string learnSetName) == false)
+                            NotifyService.SetSendWithBotCommandAnswers(idUser, MessagesRepository.GetLearnSetRemovedError(idLearnSet, learnSetName));
                         else
-                            _notifyService.SetSendWithBotCommandAnswers(idUser, _messagesRepository.GetLearnSetRemoved(idLearnSet, learnSetName));
+                            NotifyService.SetSendWithBotCommandAnswers(idUser, MessagesRepository.GetLearnSetRemoved(idLearnSet, learnSetName));
                     }
                     else
-                        _notifyService.SetSendWithBotCommandAnswers(idUser, _messagesRepository.GetErrorCommand());
+                        NotifyService.SetSendWithBotCommandAnswers(idUser, MessagesRepository.GetErrorCommand());
 
                     break;
 
                 default:
-                    _logger.LogInformation($"Error answer to command: {command.ToString()}");
-                    _notifyService.SetSendWithBotCommandAnswers(idUser, _messagesRepository.GetErrorCommand());
+                    Logger.LogInformation($"Error answer to command: {command.ToString()}");
+                    NotifyService.SetSendWithBotCommandAnswers(idUser, MessagesRepository.GetErrorCommand());
                     break;
             }
             return true;
@@ -175,8 +167,8 @@ namespace LearnEnglishWordsBot.Controllers
 
         void HandlerCommandUndefined(int idUser, string messageFromUser)
         {
-            _logger.LogInformation($"Undefined message: {messageFromUser} from idUser: {idUser}");
-            _notifyService.SetSendWithBotCommandAnswers(idUser);
+            Logger.LogInformation($"Undefined message: {messageFromUser} from idUser: {idUser}");
+            NotifyService.SetSendWithBotCommandAnswers(idUser);
         }
 
         string ReturnUsername(Message message)

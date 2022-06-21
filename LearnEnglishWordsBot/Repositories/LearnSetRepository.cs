@@ -12,23 +12,20 @@ namespace LearnEnglishWordsBot.Repositories
 {
     public class LearnSetRepository : ILearnSetRepository
     {
-        readonly string _connectionString;
-        readonly ILogger _logger;
-        readonly IWordsRepository _wordsRepository;
+        private string ConnectionString { get; }
+        private ILogger Logger { get; }
+        private IWordsRepository WordsRepository { get; }
 
-        public LearnSetRepository(
-               IOptions<DatabaseSettings> databaseOptions,
-               ILogger<LearnSetRepository> logger,
-               IWordsRepository wordsRepository)
+        public LearnSetRepository(IOptions<DatabaseSettings> databaseOptions, ILogger<LearnSetRepository> logger, IWordsRepository wordsRepository)
         {
-            _connectionString = databaseOptions.Value.DefaultConnection;
-            _logger = logger;
-            _wordsRepository = wordsRepository;
+            ConnectionString = databaseOptions.Value.DefaultConnection;
+            Logger = logger;
+            WordsRepository = wordsRepository;
         }
 
         public bool SetAddToLearning(int idUser, int idLearnSet)
         {
-            using (var conn = new NpgsqlConnection(_connectionString))
+            using (var conn = new NpgsqlConnection(ConnectionString))
             {
                 RemoveAllWordsFromLearned(conn, idUser, idLearnSet);
 
@@ -41,7 +38,7 @@ namespace LearnEnglishWordsBot.Repositories
                 var result = conn.Execute(sql, new { idUser, idLearnSet });
                 if (result != 1)
                 {
-                    _logger.LogError($"Error SetAddLearnSetToLearning for user with id:{idUser} and learnSet id:{idLearnSet}, insert query return result is not qual 1");
+                    Logger.LogError($"Error SetAddLearnSetToLearning for user with id:{idUser} and learnSet id:{idLearnSet}, insert query return result is not qual 1");
                     return false;
                 }
                 return true;
@@ -50,13 +47,13 @@ namespace LearnEnglishWordsBot.Repositories
 
         public void SetRemoveFromLearning(int idUser, int idLearnSet)
         {
-            using (var conn = new NpgsqlConnection(_connectionString))
+            using (var conn = new NpgsqlConnection(ConnectionString))
                 RemoveFromLearning(conn, idUser, idLearnSet);
         }
 
         public void SetAdd(string name, out int idLearnSet)
         {
-            using (var conn = new NpgsqlConnection(_connectionString))
+            using (var conn = new NpgsqlConnection(ConnectionString))
             {
                 var sql =
                 @"INSERT INTO learn_set
@@ -71,7 +68,7 @@ namespace LearnEnglishWordsBot.Repositories
 
         public void SetAddWord(int idWord, int idLearnSet, out bool isAlreasyExist)
         {
-            using (var conn = new NpgsqlConnection(_connectionString))
+            using (var conn = new NpgsqlConnection(ConnectionString))
             {
                 isAlreasyExist = IsWordExist(conn, idWord, idLearnSet);
                 if (isAlreasyExist)
@@ -123,7 +120,7 @@ namespace LearnEnglishWordsBot.Repositories
 
         public bool GetIsExist(int idLearnSet)
         {
-            using (var conn = new NpgsqlConnection(_connectionString))
+            using (var conn = new NpgsqlConnection(ConnectionString))
             {
                 var sql =
                @"SELECT
@@ -139,7 +136,7 @@ namespace LearnEnglishWordsBot.Repositories
 
         public bool GetIsLearned(IDbConnection conn, int idUser, int idLearnSet)
         {
-            var wordsToLearn = _wordsRepository.GetRandomForLearnTask(conn, idUser, new int[] { idLearnSet }, 1);            
+            var wordsToLearn = WordsRepository.GetRandomForLearnTask(conn, idUser, new int[] { idLearnSet }, 1);            
             var isLearned = wordsToLearn.Length < 1;
             if (isLearned)
             {
@@ -167,7 +164,7 @@ namespace LearnEnglishWordsBot.Repositories
         public bool GetName(int idLearnSet, out string name)
         {
             name = "error";
-            using (var conn = new NpgsqlConnection(_connectionString))
+            using (var conn = new NpgsqlConnection(ConnectionString))
             {
                 var sql =
                @"SELECT
@@ -184,7 +181,7 @@ namespace LearnEnglishWordsBot.Repositories
         public void GetAmountLearned(int idUser, int idLearnSet, out int amount)
         {
             amount = 0;
-            using (var conn = new NpgsqlConnection(_connectionString))
+            using (var conn = new NpgsqlConnection(ConnectionString))
             {
                 if (ReturnIdLearnedSet(conn, idUser, idLearnSet, out int idLearnedSet) == false)
                     return;

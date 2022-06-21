@@ -1,27 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace LearnEnglishWordsBot
 {
     public class ThreadFlow<T> : IDisposable
     {
-        readonly string Name;
-        Queue<T> Queue = new Queue<T>();
-        object QueueLock = new object();
-        bool ThreadDestroyFlag = false;
-        Thread ThreadQueue = null;
-        AutoResetEvent ThreadARE = new AutoResetEvent(false);
+        private string Name { get; }
+        private Queue<T> Queue { get; }
+        private object QueueLock { get; }
+        private bool ThreadDestroyFlag;
+        private Thread ThreadQueue { get; }
+        private AutoResetEvent ThreadARE { get; }
         public delegate void FlowEvent(T Value);
-        event FlowEvent Update;
+        private event FlowEvent Update;
 
-        public ThreadFlow(
-            string name,
-            FlowEvent flowEvent)
+        public ThreadFlow(string name, FlowEvent flowEvent)
         {
             Name = name;
+            Queue = new Queue<T>();
+            QueueLock = new object();
+            ThreadARE = new AutoResetEvent(false);
 
             ThreadQueue = new Thread(new ThreadStart(ThreadWork))
             {

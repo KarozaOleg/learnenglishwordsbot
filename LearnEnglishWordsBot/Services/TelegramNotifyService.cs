@@ -19,29 +19,22 @@ namespace LearnEnglishWordsBot.Services
 {
     public class TelegramNotifyService : INotifyService, IDisposable
     {
-        readonly ILogger _logger;
-        readonly TelegramBotClient _client;
-        readonly string _connectionString;        
-        readonly IMessagesRepository _messageCommandRepository;
-        readonly IAnswersRepository _answersRepository;
-        readonly ThreadFlow<(int idUser, string message, ReplyKeyboardMarkup keyboad)> FlowMessages;
+        private ILogger Logger { get; }
+        private TelegramBotClient Client { get; }
+        private string ConnectionString { get; }
+        private IMessagesRepository MessageCommandRepository { get; }
+        private IAnswersRepository AnswersRepository { get; }
+        private ThreadFlow<(int idUser, string message, ReplyKeyboardMarkup keyboad)> FlowMessages { get; }
 
-        public TelegramNotifyService(
-            ILogger<TelegramNotifyService> logger,
-            IMessagesRepository messageCommandRepository,
-            IAnswersRepository answersRepository,
-            IOptions<BotSettings> settings,
-            IOptions<DatabaseSettings> databaseSettings)
+        public TelegramNotifyService(ILogger<TelegramNotifyService> logger, IMessagesRepository messageCommandRepository, IAnswersRepository answersRepository, IOptions<BotSettings> settings, IOptions<DatabaseSettings> databaseSettings)
         {
-            FlowMessages = new ThreadFlow<(int idUser, string message, ReplyKeyboardMarkup keyboad)>(
-                "telegram_messages",
-                WorkWithFlowMessage);
+            FlowMessages = new ThreadFlow<(int idUser, string message, ReplyKeyboardMarkup keyboad)>("telegram_messages", WorkWithFlowMessage);
 
-            _logger = logger;
-            _messageCommandRepository = messageCommandRepository;
-            _answersRepository = answersRepository;
+            Logger = logger;
+            MessageCommandRepository = messageCommandRepository;
+            AnswersRepository = answersRepository;
 
-            _connectionString = databaseSettings.Value.DefaultConnection;
+            ConnectionString = databaseSettings.Value.DefaultConnection;
 
             var _settings = settings.Value;
             var httpClient = default(HttpClient);
@@ -56,7 +49,7 @@ namespace LearnEnglishWordsBot.Services
                 httpClient = new HttpClient(new HttpClientHandler { Proxy = proxy, UseProxy = true });
             }
 
-            _client = new TelegramBotClient(_settings.BotToken, httpClient);
+            Client = new TelegramBotClient(_settings.BotToken, httpClient);
         }
         
         public void Dispose()
@@ -71,12 +64,12 @@ namespace LearnEnglishWordsBot.Services
 
         public void SetSend(int idUser, VoteMessage message)
         {
-            SendMessage(idUser, message._message, ReturnKeyboard(message.Answers));
+            SendMessage(idUser, message.Message, ReturnKeyboard(message.Answers));
         }
 
         public void SetSend(long idChat, VoteMessage message)
         {
-            _client.SendTextMessageAsync(idChat, message._message, ParseMode.Markdown, replyMarkup: ReturnKeyboard(message.Answers));
+            Client.SendTextMessageAsync(idChat, message.Message, ParseMode.Markdown, replyMarkup: ReturnKeyboard(message.Answers));
         }
 
         public void SetCreateRecipient(int idUser, long idChat, ref bool isUserAlreadyExist)
@@ -91,7 +84,7 @@ namespace LearnEnglishWordsBot.Services
                 return;
             }
 
-            using (IDbConnection conn = new NpgsqlConnection(_connectionString))
+            using (IDbConnection conn = new NpgsqlConnection(ConnectionString))
             {
                 conn.Open();
 
@@ -106,7 +99,7 @@ namespace LearnEnglishWordsBot.Services
 
         void UpdateIdChat(int idUser, long idChat)
         {
-            using (IDbConnection conn = new NpgsqlConnection(_connectionString))
+            using (IDbConnection conn = new NpgsqlConnection(ConnectionString))
             {
                 conn.Open();
 
@@ -140,7 +133,7 @@ namespace LearnEnglishWordsBot.Services
         bool IsExist(int idUser, out long idChat)
         {
             idChat = 0;
-            using (IDbConnection db = new NpgsqlConnection(_connectionString))
+            using (IDbConnection db = new NpgsqlConnection(ConnectionString))
             {
                 var sql =
                     "SELECT " +
@@ -163,16 +156,16 @@ namespace LearnEnglishWordsBot.Services
         {
             if (message.Length < 1)
             {
-                message = _messageCommandRepository.GetMisunderstood();
+                message = MessageCommandRepository.GetMisunderstood();
             }
-            var answers = _answersRepository.GetAnswersBotCommand();
+            var answers = AnswersRepository.GetAnswersBotCommand();
             SetSend(idUser, new VoteMessage(message, answers));
         }
 
         public void SetSendWithBotCommandAnswers(long idChat)
         {
-            var message = _messageCommandRepository.GetMisunderstood();
-            var answers = _answersRepository.GetAnswersBotCommand();
+            var message = MessageCommandRepository.GetMisunderstood();
+            var answers = AnswersRepository.GetAnswersBotCommand();
             SetSend(idChat, new VoteMessage(message, answers));
         }
 
@@ -180,12 +173,12 @@ namespace LearnEnglishWordsBot.Services
         {
             if (IsExist(message.idUser, out long idChat) == false)
             {
-                _logger.LogError($"Can't send message for user: {message.idUser}, can't get idChat");
+                Logger.LogError($"Can't send message for user: {message.idUser}, can't get idChat");
                 return;
             }
             var msg = message.mess.Replace("_", "\\_");
             //todo: receive status, log errors
-            _client.SendTextMessageAsync(idChat, msg, ParseMode.Markdown, replyMarkup: message.keyboad);
+            Client.SendTextMessageAsync(idChat, msg, ParseMode.Markdown, replyMarkup: message.keyboad);
         }
     }
 }

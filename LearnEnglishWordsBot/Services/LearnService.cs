@@ -9,59 +9,52 @@ namespace LearnEnglishWordsBot.Services
 {
     public class LearnService : ILearnService
     {
-        readonly string _connectionString;
-        readonly ILogger _logger;
-        readonly INotifyService _notifyService;
-        readonly IMessagesRepository _messagesRepository;
-        readonly ILearnTaskService _learnTaskService;
-        readonly ILearnTaskRepository _learnTaskRepository;
-        readonly IWordsRepository _wordsRepository;
+        private string ConnectionString { get; }
+        private ILogger Logger { get; }
+        private INotifyService NotifyService { get; }
+        private IMessagesRepository MessagesRepository { get; }
+        private ILearnTaskService LearnTaskService { get; }
+        private ILearnTaskRepository LearnTaskRepository;
+        private IWordsRepository WordsRepository { get; }
 
-        public LearnService(
-            ILogger<LearnService> logger,
-            INotifyService notifyService,
-            IOptions<DatabaseSettings> databaseOptions,
-            IMessagesRepository messagesRepository,
-            ILearnTaskService learnTasksService,
-            ILearnTaskRepository learnTaskRepository,
-            IWordsRepository wordsRepository)
+        public LearnService(ILogger<LearnService> logger, INotifyService notifyService, IOptions<DatabaseSettings> databaseOptions, IMessagesRepository messagesRepository, ILearnTaskService learnTasksService, ILearnTaskRepository learnTaskRepository, IWordsRepository wordsRepository)
         {
-            _logger = logger;
-            _notifyService = notifyService;
-            _connectionString = databaseOptions.Value.DefaultConnection;
-            _messagesRepository = messagesRepository;
-            _learnTaskService = learnTasksService;
-            _learnTaskRepository = learnTaskRepository;
-            _wordsRepository = wordsRepository;
+            Logger = logger;
+            NotifyService = notifyService;
+            ConnectionString = databaseOptions.Value.DefaultConnection;
+            MessagesRepository = messagesRepository;
+            LearnTaskService = learnTasksService;
+            LearnTaskRepository = learnTaskRepository;
+            WordsRepository = wordsRepository;
         }
 
         public bool SetHandleMessage(int idUser, string message)
         {
-            using (var conn = new NpgsqlConnection(_connectionString))
+            using (var conn = new NpgsqlConnection(ConnectionString))
             {
-                if (_learnTaskRepository.GetSended(conn, idUser, out TaskToLearn taskCurrent) == false)
+                if (LearnTaskRepository.GetSended(conn, idUser, out TaskToLearn taskCurrent) == false)
                     return false;
 
                 var correctAnswer = taskCurrent.IsRevers ? taskCurrent.InRussian : taskCurrent.InEnglish;
                 if (correctAnswer != message)
                 {
-                    _notifyService.SetSend(idUser, _messagesRepository.GetTaskIncorrectAnswer());
-                    _wordsRepository.SetResetAmountSuccessAnswers(conn, idUser, taskCurrent.IdWord);
-                    _learnTaskRepository.SetIncreaseAmountWrongAnswer(conn, idUser, taskCurrent.IdTask);
+                    NotifyService.SetSend(idUser, MessagesRepository.GetTaskIncorrectAnswer());
+                    WordsRepository.SetResetAmountSuccessAnswers(conn, idUser, taskCurrent.IdWord);
+                    LearnTaskRepository.SetIncreaseAmountWrongAnswer(conn, idUser, taskCurrent.IdTask);
 
-                    if (_learnTaskService.SetSendTask(conn, idUser, taskCurrent.IdTask) == false)
-                        _notifyService.SetSendWithBotCommandAnswers(idUser, _messagesRepository.GetErrorCommand());
+                    if (LearnTaskService.SetSendTask(conn, idUser, taskCurrent.IdTask) == false)
+                        NotifyService.SetSendWithBotCommandAnswers(idUser, MessagesRepository.GetErrorCommand());
                 }
                 else
                 {
-                    _notifyService.SetSend(idUser, _messagesRepository.GetTaskCorrectAnswer());
-                    _wordsRepository.SetIncreaseAmountSuccessAnswers(conn, idUser, taskCurrent.IdWord);
-                    _learnTaskRepository.SetRemove(conn, idUser, taskCurrent.IdTask);
+                    NotifyService.SetSend(idUser, MessagesRepository.GetTaskCorrectAnswer());
+                    WordsRepository.SetIncreaseAmountSuccessAnswers(conn, idUser, taskCurrent.IdWord);
+                    LearnTaskRepository.SetRemove(conn, idUser, taskCurrent.IdTask);
 
-                    if (_learnTaskRepository.GetRandom(conn, idUser, out TaskToLearn task) == false)
-                        _notifyService.SetSendWithBotCommandAnswers(idUser, _messagesRepository.GetEmptyTasks());
+                    if (LearnTaskRepository.GetRandom(conn, idUser, out TaskToLearn task) == false)
+                        NotifyService.SetSendWithBotCommandAnswers(idUser, MessagesRepository.GetEmptyTasks());
                     else
-                        _learnTaskService.SetSendTask(conn, idUser, task.IdTask);
+                        LearnTaskService.SetSendTask(conn, idUser, task.IdTask);
                 }
             }
             return true;
